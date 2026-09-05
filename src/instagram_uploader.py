@@ -90,6 +90,27 @@ def publish_reel(video_url: str, caption: str) -> str:
     return media_id
 
 
+def post_comment(media_id: str, message: str) -> None:
+    """Post a comment on a published media item (e.g. a YouTube CTA link).
+
+    Instagram does not render links in captions or comments as clickable,
+    but a comment with the raw URL is still copyable and keeps the caption
+    itself clean. Failures here are non-fatal to the publish flow.
+    """
+    if not IG_ACCESS_TOKEN:
+        raise RuntimeError("IG_ACCESS_TOKEN not set in environment")
+
+    resp = requests.post(
+        f"{GRAPH_API_BASE}/{media_id}/comments",
+        data={"message": message, "access_token": IG_ACCESS_TOKEN},
+        timeout=30,
+    )
+    if not resp.ok:
+        print(f"comment post failed: {resp.status_code} {resp.text}")
+    resp.raise_for_status()
+    print(f"posted CTA comment on {media_id}")
+
+
 if __name__ == "__main__":
     import sys
 
