@@ -51,6 +51,8 @@ def publish_reel(video_url: str, caption: str) -> str:
         },
         timeout=30,
     )
+    if not create_resp.ok:
+        print(f"media creation failed: {create_resp.status_code} {create_resp.text}")
     create_resp.raise_for_status()
     creation_id = create_resp.json()["id"]
     print(f"created media container: {creation_id}")
