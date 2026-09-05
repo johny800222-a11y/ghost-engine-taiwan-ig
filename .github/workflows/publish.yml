@@ -1,0 +1,39 @@
+name: Publish Instagram Reel
+
+on:
+  schedule:
+    # Daily at 12:00 UTC (20:00 Taiwan time). Adjust as the posting cadence
+    # settles — each run publishes exactly one pending item from
+    # config/queue.json, so the cron interval controls posting frequency.
+    - cron: "0 12 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Publish next queued Reel
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_BUSINESS_ACCOUNT_ID: ${{ secrets.IG_BUSINESS_ACCOUNT_ID }}
+        run: python scripts/publish_next.py
+
+      - name: Commit updated queue state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add config/queue.json
+          git diff --cached --quiet || git commit -m "chore: mark queue item as published [skip ci]"
+          git push
