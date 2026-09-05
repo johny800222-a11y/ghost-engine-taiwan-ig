@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from instagram_uploader import publish_reel  # noqa: E402
+from instagram_uploader import publish_reel, post_comment  # noqa: E402
 
 QUEUE_PATH = os.path.join(os.path.dirname(__file__), "..", "config", "queue.json")
 
@@ -37,6 +37,13 @@ def main():
     next_item["status"] = "published"
     next_item["published_at"] = datetime.now(timezone.utc).isoformat()
     next_item["media_id"] = media_id
+
+    youtube_url = next_item.get("youtube_url")
+    if youtube_url:
+        try:
+            post_comment(media_id, f"🎥 Watch the full story: {youtube_url}")
+        except Exception as e:  # noqa: BLE001 - never fail the publish over a comment
+            print(f"warning: could not post YouTube CTA comment: {e}")
 
     with open(QUEUE_PATH, "w", encoding="utf-8") as f:
         json.dump(queue, f, ensure_ascii=False, indent=2)
